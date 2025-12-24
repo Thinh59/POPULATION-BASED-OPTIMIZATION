@@ -1,0 +1,35 @@
+Source/
+├── configs/
+│   └── algorithms/
+│       ├── ga.yaml             [KEEP]
+│       ├── fa.yaml             [KEEP]
+│       ├── cs.yaml             [KEEP]
+│       ├── pso.yaml            [UPDATE]
+│       ├── de.yaml             [NEW]
+│       └── hybrid.yaml         [NEW]
+├── src/
+│   ├── optimizers/
+│   │   └── continuous/
+│   │       ├── ga_optimizer.py     [KEEP]
+│   │       ├── fa_optimizer.py     [KEEP]
+│   │       ├── cs_optimizer.py     [KEEP]
+│   │       ├── pso_optimizer.py    [UPDATE - Class]
+│   │       ├── de_optimizer.py     [NEW]
+│   │       └── hybrid_optimizer.py [NEW]
+│   ├── problems/
+│   │   └── continuous/
+│   │       ├── sphere_function.py  [KEEP]
+│   │       ├── ackley_function.py  [KEEP]
+│   │       └── rastrigin_function.py [KEEP]
+│   ├── utils/
+│   │   ├── config_loader.py            [UPDATE]
+│   │   └── compare_metrics_continuous.py [UPDATE - Quan trọng]
+│   └── visualize/
+│       └── continuous/
+│           ├── visualize_convergence.py    [KEEP]
+│           └── visualize_swarm_classic_comparison.py [UPDATE - Màu sắc]
+├── menu/
+│   ├── __init__.py
+│   ├── helper.py               [UPDATE]
+│   └── continuous_mode.py      [UPDATE - Menu chính]
+└── main.py                     [UPDATE - Entry point]

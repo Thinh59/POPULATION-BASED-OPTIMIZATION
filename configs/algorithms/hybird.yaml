@@ -1,0 +1,9 @@
+algorithm_name: Hybrid
+parameters:
+  population_size: 50
+  generations: 100
+  w: 0.5
+  c1: 1.5
+  c2: 1.5
+  crossover_rate: 0.8
+  mutation_rate: 0.1

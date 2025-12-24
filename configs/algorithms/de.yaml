@@ -1,0 +1,6 @@
+algorithm_name: DE
+parameters:
+  population_size: 50
+  generations: 100
+  w: 0.5
+  p: 0.9
