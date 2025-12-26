@@ -38,16 +38,37 @@ Key goals:
 
 ## Project Structure
 Source/
-├── configs/            # YAML configuration files
-├── menu/               # Interactive menu and helpers
-├── src/
-│   ├── optimizers/     # Optimization algorithms
-│   ├── problems/       # Benchmark problems
-│   ├── visualize/      # Plotting and visualization
-│   └── utils/          # Metrics and utilities
-├── results/            # CSV and JSON result files
-├── visualizations/     # Generated figures
-└── main.py             # Program entry point
+├── main.py                 # Program entry point
+├── README.md               # Project documentation
+├── requirements.txt        # Python dependencies
+│
+├── configs/                # YAML configuration files
+│   ├── algorithms/         # Algorithm parameter settings (CS, PSO, GA, DE, ...)
+│   └── problems/           # Benchmark problem definitions
+│
+├── menu/                   # Execution modes and helper functions
+│   ├── continuous_mode.py
+│   └── helper.py
+│
+├── src/                    # Core source code
+│   ├── optimizers/
+│   │   └── continuous/     # Continuous optimization algorithms
+│   │
+│   ├── problems/
+│   │   └── continuous/     # Continuous benchmark functions
+│   │
+│   ├── utils/              # Configuration loading and metric comparison
+│   │
+│   └── visualize/
+│       └── continuous/     # Visualization scripts
+│
+├── results/                # Experimental results
+│   └── continuous/
+│       └── performance/    # CSV and JSON performance metrics
+│
+└── visualizations/         # Generated figures for analysis and reporting
+    ├── continuous/
+    └── theory/
 
 ---
 

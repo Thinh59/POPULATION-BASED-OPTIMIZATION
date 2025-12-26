@@ -11,7 +11,7 @@ class AckleyFunction:
         self.a = a
         self.b = b
         self.c = c
-        self.bounds = (-32.768, 32.768) # Standard bounds for Ackley function (Searching domain, or -32.768 <= x <= 32.768)
+        self.bounds = (-32.768, 32.768) 
         self.global_optimum = np.zeros(dimensions)
         self.global_optimum_value = 0.0
 
@@ -31,8 +31,7 @@ class AckleyFunction:
         term2 = -np.exp(sum_cos / d)
         
         return term1 + term2 + self.a + np.e
-        
-        # return -self.a * np.exp(-self.b * np.sqrt(1/d * sum_sq)) - np.exp(1/d * sum_cos) + self.a + np.e
+
     
     def get_bounds(self):
         return [self.bounds] * self.dimensions

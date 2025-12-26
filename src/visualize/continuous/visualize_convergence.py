@@ -12,8 +12,7 @@ def visualize_all_convergence(problems, results_dir, output_dir):
 
     for problem_name in problems:
         print(f"Visualizing {problem_name.title()} Function:")
-        
-        # 1. Đọc file JSON
+
         json_path = os.path.join(results_dir, f"{problem_name.lower()}_detailed.json")
         
         if not os.path.exists(json_path):
@@ -31,7 +30,6 @@ def visualize_all_convergence(problems, results_dir, output_dir):
             print("Empty data.")
             continue
 
-        # 2. Vẽ biểu đồ
         try:
             plt.figure(figsize=(10, 6))
 
@@ -49,7 +47,7 @@ def visualize_all_convergence(problems, results_dir, output_dir):
             plt.title(f"Convergence Comparison - {problem_name.title()} Function")
             plt.xlabel("Iterations")
             plt.ylabel("Best Fitness (Log Scale)")
-            plt.yscale("log") # Dùng Log scale để dễ nhìn sự khác biệt
+            plt.yscale("log") 
             plt.grid(True, which="both", ls="-", alpha=0.2)
             plt.legend()
 

@@ -9,7 +9,7 @@ class RastriginFunction:
         """
         self.dimensions = dimensions
         self.A = A
-        self.bounds = (-5.12, 5.12)  # Standard bounds for Rastrigin function
+        self.bounds = (-5.12, 5.12)  
         self.global_optimum = np.zeros(dimensions)
         self.global_optimum_value = 0.0
 

@@ -7,7 +7,7 @@ class HybridGAPSO(GeneticAlgorithm):
         super().__init__(objective_function, bounds, population_size, generations, 
                          crossover_rate, mutation_rate, **kwargs)
         self.w = w; self.c1 = c1; self.c2 = c2
-        self.population_history = [] # <--- [ADD]
+        self.population_history = []
 
     def optimize(self, verbose=True):
         pop = np.random.uniform(self.bounds[:, 0], self.bounds[:, 1], (self.population_size, self.dimensions))
@@ -19,10 +19,9 @@ class HybridGAPSO(GeneticAlgorithm):
         g_best_pos = pop[g_best_idx].copy(); g_best_val = fit[g_best_idx]
         
         self.best_fitness_history = []
-        self.population_history.append(pop.copy()) # [ADD] Lưu ban đầu
+        self.population_history.append(pop.copy())
 
         for gen in range(self.generations):
-            # GA Part
             next_pop = []
             elite_idx = np.argsort(fit)[:self.elite_size]
             for idx in elite_idx: next_pop.append(pop[idx].copy())
@@ -34,8 +33,7 @@ class HybridGAPSO(GeneticAlgorithm):
                 next_pop.extend([c1, c2])
             
             pop = np.array(next_pop[:self.population_size])
-            
-            # PSO Part
+
             r1 = np.random.rand(self.population_size, self.dimensions)
             r2 = np.random.rand(self.population_size, self.dimensions)
             vel = self.w * vel + self.c1 * r1 * (p_best_pos - pop) + self.c2 * r2 * (g_best_pos - pop)
@@ -53,7 +51,7 @@ class HybridGAPSO(GeneticAlgorithm):
                 g_best_pos = p_best_pos[min_idx].copy()
                 
             self.best_fitness_history.append(g_best_val)
-            self.population_history.append(pop.copy()) # [ADD] Lưu mỗi thế hệ
+            self.population_history.append(pop.copy())
             
         return g_best_pos, g_best_val
     

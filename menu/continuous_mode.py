@@ -4,26 +4,21 @@ import json
 import numpy as np
 import pandas as pd
 
-# --- FIX LỖI POPUP WINDOW ---
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-
 from menu.helper import clear_screen, print_header, get_algorithm_params
 
-# Import Utils & Visualizers
-from src.utils.compare_metrics_continuous import run_algorithm_multiple_times
+from src.visualize.continuous.visualize_evolution import visualize_2d_evolution
+from src.visualize.continuous.visualize_initialization import visualize_population_distribution
 from src.visualize.continuous.visualize_convergence import visualize_all_convergence
 from src.visualize.continuous.visualize_swarm_classic_comparison import visualize_all_paradigm_comparison
+from src.utils.compare_metrics_continuous import run_algorithm_multiple_times
 
-# Import Problems
 from src.problems.continuous.sphere_function import SphereFunction
 from src.problems.continuous.ackley_function import AckleyFunction
 from src.problems.continuous.rastrigin_function import RastriginFunction
-# [MỚI] Thêm hàm Wheeler's Ridge
 from src.problems.continuous.wheelers_ridge import WheelersRidge
+from src.problems.continuous.branin import BraninFunction
+from src.problems.continuous.michalewicz import MichalewiczFunction
 
-# Import Optimizers
 from src.optimizers.continuous.ga_optimizer import GeneticAlgorithm
 from src.optimizers.continuous.fa_optimizer import FireflyAlgorithm
 from src.optimizers.continuous.cs_optimizer import CuckooSearch
@@ -31,16 +26,13 @@ from src.optimizers.continuous.pso_optimizer import ParticleSwarmOptimization
 from src.optimizers.continuous.de_optimizer import DifferentialEvolution
 from src.optimizers.continuous.hybrid_optimizer import HybridGAPSO
 
-# ===============================================================================
-#                               HELPER FUNCTIONS
-# ===============================================================================
-
 def get_problem_instance(choice, dim=10):
     if choice == 'ackley': return AckleyFunction(dim)
     if choice == 'sphere': return SphereFunction(dim)
     if choice == 'rastrigin': return RastriginFunction(dim)
-    # [MỚI] Thêm lựa chọn Wheeler
-    if choice == 'wheeler': return WheelersRidge(dim) 
+    if choice == 'wheeler': return WheelersRidge(dim)
+    if choice == 'branin': return BraninFunction(dim=2)         # Luôn là 2D
+    if choice == 'michalewicz': return MichalewiczFunction(dim)
     return None
 
 def get_optimizer_class(name):
@@ -50,63 +42,6 @@ def get_optimizer_class(name):
     }
     return map_class.get(name)
 
-# --- VẼ HÌNH 2D (VISUAL DEMO) ---
-def visualize_2d_evolution(optimizer, problem, name):
-    try:
-        history = optimizer.get_history()['population']
-    except:
-        return
-
-    # 1. Tạo lưới điểm contour
-    # Lấy bounds chuẩn
-    bounds = problem.get_bounds()[0] 
-    x = np.linspace(bounds[0], bounds[1], 100)
-    y = np.linspace(bounds[0], bounds[1], 100)
-    X, Y = np.meshgrid(x, y)
-    Z = np.zeros_like(X)
-    for i in range(X.shape[0]):
-        for j in range(X.shape[1]):
-            Z[i,j] = problem.evaluate(np.array([X[i,j], Y[i,j]]))
-
-    # 2. Vẽ 8 hình snapshots
-    fig, axes = plt.subplots(2, 4, figsize=(16, 8), constrained_layout=True)
-    axes = axes.flatten()
-    
-    total_gen = len(history)
-    if total_gen >= 40:
-        snapshots = [0, 1, 2, 4, 8, 15, 25, 39]
-    else:
-        snapshots = np.linspace(0, total_gen-1, 8, dtype=int)
-    
-    for i, gen_idx in enumerate(snapshots):
-        ax = axes[i]
-        
-        # [QUAN TRỌNG] Dùng contourf (filled) thay vì contour (lines) để hình mượt trở lại
-        ax.contourf(X, Y, Z, levels=50, cmap='viridis_r', alpha=0.95)
-        
-        if gen_idx < total_gen:
-            pop = history[gen_idx]
-            # Vẽ chấm đen
-            ax.scatter(pop[:, 0], pop[:, 1], c='black', s=25, edgecolors='white', linewidth=0.5)
-            
-        ax.set_title(f"Gen {gen_idx}", fontweight='bold')
-        ax.set_xticks([]); ax.set_yticks([])
-        ax.set_xlim(bounds[0], bounds[1])
-        ax.set_ylim(bounds[0], bounds[1])
-
-    plt.suptitle(f"{name} on {problem.get_name()} (Book Style Demo)", fontsize=16, fontweight='bold')
-    
-    save_dir = 'visualizations/continuous/demo_visual_2d'
-    os.makedirs(save_dir, exist_ok=True)
-    filename = f"{save_dir}/{name}_{problem.__class__.__name__}_2D.png"
-    plt.savefig(filename, dpi=100)
-    plt.close('all')
-    print(f"   [SAVED] 2D Visual saved to: {filename}")
-
-# ===============================================================================
-#                               CORE LOGIC
-# ===============================================================================
-
 def run_visual_demo_logic(algo_name, problem_key):
     dim = 2 
     problem = get_problem_instance(problem_key, dim)
@@ -114,27 +49,27 @@ def run_visual_demo_logic(algo_name, problem_key):
         print("Problem not found!")
         return
 
-    cfg = get_algorithm_params()[algo_name.upper()].copy()
-    cfg['population_size'] = 20
-    cfg['generations'] = 40
-    
-    # Riêng cho Wheeler's Ridge cần chỉnh Bounds lại trong config nếu cần thiết
-    # Nhưng class WheelersRidge đã hardcode bounds chuẩn rồi.
+    all_params = get_algorithm_params(use_yaml=True)
+    cfg = all_params.get(algo_name.upper(), {}).copy()
+
+    cfg['population_size'] = 25 
+    cfg['generations'] = 50
+
+    if algo_name == 'FA':
+        cfg['alpha'] = 0.5
+        cfg['beta0'] = 1.0
+        cfg['gamma'] = 0.1
     
     OptimizerClass = get_optimizer_class(algo_name)
     print(f"   >>> Visualizing {algo_name} on {problem.get_name()}...", end=" ", flush=True)
-    
+
     try:
-        if algo_name in ['DE', 'PSO', 'Hybrid', 'GA', 'FA']:
-             opt = OptimizerClass(problem.evaluate, problem.get_bounds(), **cfg)
-             is_new_style = True
-        else:
-             opt = OptimizerClass(**cfg)
-             is_new_style = False
+        opt = OptimizerClass(problem.evaluate, problem.get_bounds(), **cfg)
+        is_new_style = True
     except:
         opt = OptimizerClass(**cfg)
         is_new_style = False
-    
+
     try:
         if is_new_style:
             opt.optimize(verbose=False)
@@ -144,7 +79,7 @@ def run_visual_demo_logic(algo_name, problem_key):
         visualize_2d_evolution(opt, problem, algo_name)
         
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error details: {e}")
 
 def run_visual_demo_wizard():
     while True:
@@ -152,41 +87,38 @@ def run_visual_demo_wizard():
         print_header()
         print(" --- VISUAL DEMO MODE (2D ANIMATION STYLE) ---")
         
-        # 1. Chọn Thuật toán (Đã bổ sung FA)
         print("\n [STEP 1] SELECT ALGORITHM:")
         print("  1. DE (Differential Evolution)")
         print("  2. PSO (Particle Swarm)")
         print("  3. GA    4. CS    5. Hybrid")
-        print("  6. FA (Firefly Algorithm)") # <--- Đã thêm lại
+        print("  6. FA (Firefly Algorithm)")
         print("  0. Return")
         algo_choice = input("\n  Choose Algorithm (0-6): ").strip()
         
         if algo_choice == '0': return
         
-        # Cập nhật map đầy đủ 6 thuật toán
-        algo_map = {
-            '1':'DE', '2':'PSO', 
-            '3':'GA', '4':'CS', '5':'Hybrid',
-            '6':'FA' 
-        }
+        algo_map = {'1':'DE', '2':'PSO', '3':'GA', '4':'CS', '5':'Hybrid', '6':'FA'}
         selected_algo = algo_map.get(algo_choice)
         if not selected_algo: continue
 
-        # 2. Chọn Bài toán
         print("\n [STEP 2] SELECT PROBLEM:")
-        print("  1. Ackley Function (Hố sâu)")
-        print("  2. Wheeler's Ridge (Thung lũng cong - GIỐNG SÁCH)")
-        print("  3. Sphere Function (Hình cầu)")
+        print("  1. Ackley Function")
+        print("  2. Wheeler's Ridge")
+        print("  3. Sphere Function")
         print("  4. Rastrigin Function")
+        print("  5. Branin Function (Chuẩn cho CS/FA)")      
+        print("  6. Michalewicz Function (Chuẩn cho GA)")    
         print("  0. Return")
-        prob_choice = input("\n  Choose Problem (0-4): ").strip()
+        prob_choice = input("\n  Choose Problem (0-6): ").strip()
         
         if prob_choice == '0': continue
         
-        prob_key = 'ackley'
+        prob_key = 'ackley' 
         if prob_choice == '2': prob_key = 'wheeler'
         if prob_choice == '3': prob_key = 'sphere'
         if prob_choice == '4': prob_key = 'rastrigin'
+        if prob_choice == '5': prob_key = 'branin'
+        if prob_choice == '6': prob_key = 'michalewicz'
             
         print("\n" + "="*50)
         print(f" >>> GENERATING 2D VISUALIZATIONS...")
@@ -201,9 +133,10 @@ def run_benchmark_suite():
     print(" >>> RUNNING FULL STATISTICAL BENCHMARK (30 RUNS)")
     print("="*60)
     
-    # Chỉ benchmark trên 3 hàm chuẩn, không cần Wheeler cho thống kê
     problems = [SphereFunction(10), AckleyFunction(10), RastriginFunction(10)]
-    configs = get_algorithm_params()
+
+    configs = get_algorithm_params(use_yaml=True)
+    
     algos = ['GA', 'FA', 'CS', 'PSO', 'DE', 'Hybrid']
     
     output_dir = 'results/continuous/performance'
@@ -216,7 +149,9 @@ def run_benchmark_suite():
         
         for alg in algos:
             print(f"   Running {alg}...", end=" ", flush=True)
-            res = run_algorithm_multiple_times(alg, prob, n_runs=10, **configs.get(alg.upper(), {}))
+            alg_cfg = configs.get(alg.upper(), {})
+            
+            res = run_algorithm_multiple_times(alg, prob, n_runs=10, **alg_cfg)
             
             if res and len(res['best_fitness']) > 0:
                 metrics.append({
@@ -265,22 +200,22 @@ def run_benchmark_suite():
     
     input("\n Press Enter to return...")
 
-# ===============================================================================
-#                               MAIN MENU
-# ===============================================================================
-
 def continuous_menu():
     while True:
         clear_screen()
         print_header()
         print(" 1. Run Visual Demo (2D Swarm Behavior)")
-        print("    (Ackley, Wheeler's Ridge...)")
+        print("    (Ackley, Wheeler, Branin, Michalewicz...)")
         print(" 2. Run Benchmark Suite (Performance Graphs)")
-        print("    (Sphere, Ackley, Rastrigin - 30D)")
+        print("    (Sphere, Ackley, Rastrigin - 10D)")
+        print(" 3. Generate Theory Plots (Population Distribution)")
+        print("    (Uniform vs Normal vs Cauchy - Figure 9.1)")
         print(" 0. Exit")
         
         c = input("\n Choose: ").strip()
         
         if c == '1': run_visual_demo_wizard()
         elif c == '2': run_benchmark_suite()
+        elif c == '3': 
+            visualize_population_distribution()
         elif c == '0': sys.exit()

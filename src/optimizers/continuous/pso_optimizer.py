@@ -12,7 +12,7 @@ class ParticleSwarmOptimization:
         if random_seed is not None: np.random.seed(random_seed)
         
         self.best_fitness_history = []
-        self.population_history = [] # <--- [ADD] Thêm dòng này
+        self.population_history = []
 
     def optimize(self, verbose=True):
         X = np.random.uniform(self.bounds[:, 0], self.bounds[:, 1], (self.pop_size, self.dim))
@@ -23,8 +23,7 @@ class ParticleSwarmOptimization:
         g_best_idx = np.argmin(P_best_val)
         g_best_pos = P_best_pos[g_best_idx].copy()
         g_best_val = P_best_val[g_best_idx]
-        
-        # [ADD] Lưu trạng thái ban đầu
+
         self.population_history.append(X.copy()) 
         
         v_max = 0.2 * (self.bounds[:, 1] - self.bounds[:, 0])
@@ -50,11 +49,9 @@ class ParticleSwarmOptimization:
                 g_best_pos = P_best_pos[min_idx].copy()
             
             self.best_fitness_history.append(g_best_val)
-            # [ADD] Lưu trạng thái quần thể mỗi thế hệ
             self.population_history.append(X.copy())
             
         return g_best_pos, g_best_val
 
     def get_history(self):
-        # [ADD] Trả về cả population
         return {'best_fitness': self.best_fitness_history, 'population': self.population_history}

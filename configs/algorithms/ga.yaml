@@ -8,6 +8,7 @@ parameters:
   crossover_rate: 0.8
   mutation_rate: 0.1
   elite_size: 2
+  selection_method: 'tournament'
   tournament_size: 3
 
 description: "Genetic Algorithm - Evolution-based optimization using selection, crossover, and mutation"

@@ -11,20 +11,24 @@ class GeneticAlgorithm:
         crossover_rate: float = 0.8,
         mutation_rate: float = 0.1,
         elite_size: int = 2,
+        selection_method: str = 'tournament',  
         tournament_size: int = 3,
+        truncation_size: int = 10,            
         random_seed: int = None
     ):
         """
         Args:
             objective_function: Function to minimize
-            bounds: List of (min, max) tuples for each dimension
-            population_size: Number of individuals in population
-            generations: Number of generations to evolve
+            bounds: List of (min, max) tuples
+            population_size: Number of individuals
+            generations: Number of generations
             crossover_rate: Probability of crossover
             mutation_rate: Probability of mutation
             elite_size: Number of best individuals to preserve
-            tournament_size: Size of tournament for selection
-            random_seed: Random seed for reproducibility
+            selection_method: 'tournament', 'roulette', or 'truncation'
+            tournament_size: Size of tournament (for tournament selection)
+            truncation_size: Number of top individuals (for truncation selection)
+            random_seed: Random seed
         """
         self.objective_function = objective_function
         self.bounds = np.array(bounds)
@@ -34,12 +38,14 @@ class GeneticAlgorithm:
         self.crossover_rate = crossover_rate
         self.mutation_rate = mutation_rate
         self.elite_size = elite_size
+
+        self.selection_method = selection_method.lower()
         self.tournament_size = tournament_size
+        self.truncation_size = truncation_size
         
         if random_seed is not None:
             np.random.seed(random_seed)
-        
-        # History tracking
+
         self.best_fitness_history = []
         self.mean_fitness_history = []
         self.population_history = []
@@ -56,19 +62,43 @@ class GeneticAlgorithm:
         return population
     
     def evaluate_population(self, population):
-        """Evaluate fitness of all individuals in population."""
         fitness = np.array([self.objective_function(ind) for ind in population])
         return fitness
-    
+
     def tournament_selection(self, population, fitness):
-        """Select individual using tournament selection."""
         indices = np.random.choice(len(population), self.tournament_size, replace=False)
         tournament_fitness = fitness[indices]
         winner_idx = indices[np.argmin(tournament_fitness)]
         return population[winner_idx].copy()
-    
+
+    def truncation_selection(self, population, fitness):
+        sorted_indices = np.argsort(fitness)
+        top_k_indices = sorted_indices[:self.truncation_size]
+        selected_idx = np.random.choice(top_k_indices)
+        return population[selected_idx].copy()
+
+    def roulette_wheel_selection(self, population, fitness):
+        max_f = np.max(fitness)
+        weights = max_f - fitness + 1e-6
+
+        total_weight = np.sum(weights)
+        if total_weight == 0:
+            probs = np.ones(len(fitness)) / len(fitness)
+        else:
+            probs = weights / total_weight
+        selected_idx = np.random.choice(len(population), p=probs)
+        return population[selected_idx].copy()
+
+    def select_parent(self, population, fitness):
+        if self.selection_method == 'roulette':
+            return self.roulette_wheel_selection(population, fitness)
+        elif self.selection_method == 'truncation':
+            return self.truncation_selection(population, fitness)
+        else:
+            return self.tournament_selection(population, fitness)
+
+
     def crossover(self, parent1, parent2):
-        """Perform uniform crossover between two parents."""
         if np.random.random() < self.crossover_rate:
             mask = np.random.random(self.dimensions) < 0.5
             child1 = np.where(mask, parent1, parent2)
@@ -77,24 +107,19 @@ class GeneticAlgorithm:
         return parent1.copy(), parent2.copy()
     
     def mutate(self, individual):
-        """Perform Gaussian mutation on individual."""
         for i in range(self.dimensions):
             if np.random.random() < self.mutation_rate:
-                # Gaussian mutation
                 mutation_range = self.bounds[i, 1] - self.bounds[i, 0]
                 mutation = np.random.normal(0, 0.1 * mutation_range)
                 individual[i] += mutation
-                # Ensure within bounds
                 individual[i] = np.clip(individual[i], self.bounds[i, 0], self.bounds[i, 1])
         return individual
     
     def optimize(self, verbose=True):
-        # Initialize population
         population = self.initialize_population()
         fitness = self.evaluate_population(population)
         
         for generation in range(self.generations):
-            # Track best and mean fitness
             best_idx = np.argmin(fitness)
             self.best_fitness_history.append(fitness[best_idx])
             self.mean_fitness_history.append(np.mean(fitness))
@@ -105,27 +130,21 @@ class GeneticAlgorithm:
                 self.best_solution = population[best_idx].copy()
             
             if verbose and (generation % 10 == 0 or generation == self.generations - 1):
-                print(f"Generation {generation}: Best Fitness = {fitness[best_idx]:.6f}, "
-                      f"Mean Fitness = {np.mean(fitness):.6f}")
-            
-            # Create new population
+                print(f"Generation {generation}: Best Fitness = {fitness[best_idx]:.6f}")
+
             new_population = []
-            
-            # Elitism: keep best individuals
-            elite_indices = np.argsort(fitness)[:self.elite_size]
-            for idx in elite_indices:
-                new_population.append(population[idx].copy())
-            
-            # Generate offspring
+
+            if self.elite_size > 0:
+                elite_indices = np.argsort(fitness)[:self.elite_size]
+                for idx in elite_indices:
+                    new_population.append(population[idx].copy())
+
             while len(new_population) < self.population_size:
-                # Selection
-                parent1 = self.tournament_selection(population, fitness)
-                parent2 = self.tournament_selection(population, fitness)
+                parent1 = self.select_parent(population, fitness)
+                parent2 = self.select_parent(population, fitness)
                 
-                # Crossover
                 child1, child2 = self.crossover(parent1, parent2)
                 
-                # Mutation
                 child1 = self.mutate(child1)
                 child2 = self.mutate(child2)
                 
@@ -133,14 +152,12 @@ class GeneticAlgorithm:
                 if len(new_population) < self.population_size:
                     new_population.append(child2)
             
-            # Update population
             population = np.array(new_population[:self.population_size])
             fitness = self.evaluate_population(population)
         
         return self.best_solution, self.best_fitness
     
     def get_history(self):
-        """Return optimization history."""
         return {
             'best_fitness': self.best_fitness_history,
             'mean_fitness': self.mean_fitness_history,

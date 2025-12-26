@@ -20,7 +20,7 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         print("\n\n Program interrupted by user.")
-        print(" Goodbye!\n")
+        print(" Exit!\n")
         sys.exit(0)
     except Exception as e:
         print(f"\n Unexpected error: {e}")

@@ -67,12 +67,6 @@ def get_default_algorithm_params(algorithm_name):
             'c1': 1.49445,
             'c2': 1.49445
         },
-        'SA': {
-            'max_iterations': 100,
-            'initial_temp': 100,
-            'cooling_rate': 0.95,
-            'neighbor_scale': 0.1
-        },
         'CS': {
             'n_nests': 50,
             'max_iter': 100,
@@ -80,10 +74,20 @@ def get_default_algorithm_params(algorithm_name):
             'beta': 1.5,
             'alpha': 0.01
         },
-        'ABC': {
-            'colony_size': 50,
-            'max_iterations': 100,
-            'limit': 20
+        'DE': {
+            'population_size': 50,
+            'generations': 100,
+            'w': 0.5,
+            'p': 0.9
+        },
+        'Hybrid': {
+            'population_size': 50,
+            'generations': 100,
+            'w': 0.5,
+            'c1': 1.5,
+            'c2': 1.5,
+            'crossover_rate': 0.8,
+            'mutation_rate': 0.1
         }
     }
     
@@ -91,21 +95,10 @@ def get_default_algorithm_params(algorithm_name):
 
 
 def load_algorithm_params(algorithm_name, prefer_yaml=True):
-    """
-    Load algorithm parameters from YAML or use defaults.
-    
-    Args:
-        algorithm_name: Name of algorithm
-        prefer_yaml: If True, try YAML first, then fallback to defaults
-    
-    Returns:
-        Dictionary with algorithm parameters
-    """
     if prefer_yaml:
         params = load_algorithm_config(algorithm_name)
         if params is not None:
             return params
-    
-    # Fallback to defaults
+        
     return get_default_algorithm_params(algorithm_name)
 
