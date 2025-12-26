@@ -37,6 +37,8 @@ Key goals:
 ---
 
 ## Project Structure
+
+```text
 Source/
 ├── main.py                 # Program entry point
 ├── README.md               # Project documentation
@@ -69,6 +71,7 @@ Source/
 └── visualizations/         # Generated figures for analysis and reporting
     ├── continuous/
     └── theory/
+```
 
 ---
 
