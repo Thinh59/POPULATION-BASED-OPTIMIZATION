@@ -17,10 +17,7 @@ Key goals:
 
 ---
 
-## Video Demo:
-Youtube: [PopulationBasedOptimization](https://youtu.be/tpJ6Vg9RQkc?si=HWe3pnR0v2tvNkKq)
 
---- 
 ## Algorithms Implemented
 - Genetic Algorithm (GA)
 - Differential Evolution (DE)
